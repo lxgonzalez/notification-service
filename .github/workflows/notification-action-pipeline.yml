@@ -13,7 +13,6 @@ on:
     paths:
       - 'notification-action-service/**'
       - '.github/workflows/notification-action-pipeline.yml'
-
 jobs:
   build-and-push-docker:
     runs-on: ubuntu-latest
@@ -26,7 +25,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build Docker image
         run: docker buildx build -t ${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_IMAGE_ACT}}:latest ./notification-action-service
 
@@ -37,6 +35,14 @@ jobs:
     needs: build-and-push-docker
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Secrets
+        run: |
+          echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}"
+          echo "DOCKER_IMAGE_ACT: ${{ secrets.DOCKER_IMAGE_ACT }}"
+          echo "EMAIL_FROM: ${{ secrets.EMAIL_FROM }}"
+          echo "EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}"
+          echo "LOGO_URL: ${{ secrets.LOGO_URL }}"
+          echo "WEBSOCKET_URL: ${{ secrets.WEBSOCKET_URL }}"
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -44,21 +50,14 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            echo "Log in to Docker Hub"
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
             echo "Pull, stop, and redeploy the Docker container"
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_ACT }}:latest
-
-            if docker ps -a --filter "name=${{secrets.DOCKER_IMAGE_ACT}}" | grep -q ${{secrets.DOCKER_IMAGE_ACT}}; then
-              docker stop ${{secrets.DOCKER_IMAGE_ACT}}
-              docker rm ${{secrets.DOCKER_IMAGE_ACT}}
-            fi
-
-            docker run --restart always \
-                       -e EMAIL_FROM=${{secrets.EMAIL_FROM}} \
+            echo "Stopping and removing existing container if it exists"
+            docker stop ${{secrets.DOCKER_IMAGE_ACT}} || true
+            docker rm ${{secrets.DOCKER_IMAGE_ACT}} || true
+            docker run --restart always -e EMAIL_FROM=${{secrets.EMAIL_FROM}} \
                        -e EMAIL_PASSWORD=${{secrets.EMAIL_PASSWORD}} \
                        -e LOGO_URL=${{secrets.LOGO_URL}} \
                        -e WEBSOCKET_URL=${{secrets.WEBSOCKET_URL}} \
                        -d --name ${{secrets.DOCKER_IMAGE_ACT}} \
-                       -p 1028:1028 ${{secrets.DOCKER_USERNAME}}/${{secrets.DOCKER_IMAGE_ACT}}:latest
+                       -p 80:80 ${{secrets.DOCKER_USERNAME}}/${{secrets.DOCKER_IMAGE_ACT}}:latest
