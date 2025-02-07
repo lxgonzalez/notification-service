@@ -41,7 +41,7 @@ jobs:
           host: ${{ secrets.EC2_HOST_TEST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
+          script: 
             echo "Pull, stop, and redeploy the Docker container"
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_CODE }}:latest
             docker stop ${{secrets.DOCKER_IMAGE_CODE}} || true
