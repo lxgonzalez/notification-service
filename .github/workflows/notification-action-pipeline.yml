@@ -53,6 +53,8 @@ jobs:
             echo "Pull, stop, and redeploy the Docker container"
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_ACT }}:latest
             echo "Stopping and removing existing container if it exists"
+            docker stop ${{secrets.DOCKER_IMAGE_ACT}} || true
+            docker rm ${{secrets.DOCKER_IMAGE_ACT}} || true
             docker run -e EMAIL_FROM=${{secrets.EMAIL_FROM}} \
                        -e EMAIL_PASSWORD=${{secrets.EMAIL_PASSWORD}} \
                        -e LOGO_URL=${{secrets.LOGO_URL}} \
