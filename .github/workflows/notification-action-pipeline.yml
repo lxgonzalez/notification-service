@@ -47,6 +47,5 @@ jobs:
             echo "Stopping and removing existing container if it exists"
             docker stop ${{secrets.DOCKER_IMAGE_ACT}} || true
             docker rm ${{secrets.DOCKER_IMAGE_ACT}} || true
-            docker run --restart always
-                       -d --name ${{secrets.DOCKER_IMAGE_ACT}} \
+            docker run --restart always -d --name ${{secrets.DOCKER_IMAGE_ACT}} \
                        -p 80:80 ${{secrets.DOCKER_USERNAME}}/${{secrets.DOCKER_IMAGE_ACT}}:latest
