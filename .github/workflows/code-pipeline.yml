@@ -42,7 +42,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            echo "Export secrets as environment variables"
             export EMAIL_FROM="${{ secrets.EMAIL_FROM }}"
             export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
             export LOGO_URL="${{ secrets.LOGO_URL }}"
@@ -50,18 +49,18 @@ jobs:
             export DOCKER_IMAGE_CODE="${{ secrets.DOCKER_IMAGE_CODE }}"
             export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
 
-            echo "Pull, stop, and redeploy the Docker container"
-            docker pull $DOCKER_USERNAME/$DOCKER_IMAGE_CODE:latest
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker pull "$DOCKER_USERNAME/$DOCKER_IMAGE_CODE:latest"
 
             echo "Stopping and removing existing container if it exists"
-            docker stop $DOCKER_IMAGE_CODE || true
-            docker rm $DOCKER_IMAGE_CODE || true
+            docker stop "$DOCKER_IMAGE_CODE" || true
+            docker rm "$DOCKER_IMAGE_CODE" || true
 
             echo "Running new Docker container"
             docker run --restart always \
-                      -e EMAIL_FROM=$EMAIL_FROM \
-                      -e EMAIL_PASSWORD=$EMAIL_PASSWORD \
-                      -e LOGO_URL=$LOGO_URL \
-                      -e WEBSOCKET_URL=$WEBSOCKET_URL \
-                      -d --name $DOCKER_IMAGE_CODE \
-                      -p 80:80 $DOCKER_USERNAME/$DOCKER_IMAGE_CODE:latest
+                      -e EMAIL_FROM="$EMAIL_FROM" \
+                      -e EMAIL_PASSWORD="$EMAIL_PASSWORD" \
+                      -e LOGO_URL="$LOGO_URL" \
+                      -e WEBSOCKET_URL="$WEBSOCKET_URL" \
+                      -d --name "$DOCKER_IMAGE_CODE" \
+                      -p 80:80 "$DOCKER_USERNAME/$DOCKER_IMAGE_CODE:latest"
