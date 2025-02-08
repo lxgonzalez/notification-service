@@ -63,4 +63,4 @@ jobs:
                       -e LOGO_URL="$LOGO_URL" \
                       -e WEBSOCKET_URL="$WEBSOCKET_URL" \
                       -d --name "$DOCKER_IMAGE_CODE" \
-                      -p 80:80 "$DOCKER_USERNAME/$DOCKER_IMAGE_CODE:latest"
+                      -p 1029:1029 "$DOCKER_USERNAME/$DOCKER_IMAGE_CODE:latest"
