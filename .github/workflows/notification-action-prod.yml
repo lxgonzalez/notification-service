@@ -1,0 +1,66 @@
+name: Pipeline for Notification Action Microservice
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'notification-action-service/**'
+      - '.github/workflows/notification-action-pipeline.yml'
+  pull_request:
+    branches: 
+      - main
+    paths:
+      - 'notification-action-service/**'
+      - '.github/workflows/notification-action-pipeline.yml'
+jobs:
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker image
+        run: docker buildx build -t ${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_IMAGE_ACT}}:latest ./notification-action-service
+
+      - name: Push Docker image to Dockerhub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_IMAGE_ACT}}:latest
+
+  deploy-to-ec2-instance:
+    needs: build-and-push-docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST_MAIN }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            export EMAIL_FROM="${{ secrets.EMAIL_FROM }}"
+            export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
+            export LOGO_URL="${{ secrets.LOGO_URL }}"
+            export WEBSOCKET_URL="${{ secrets.WEBSOCKET_URL }}"
+            export DOCKER_IMAGE_ACT="${{ secrets.DOCKER_IMAGE_ACT }}"
+            export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker pull "$DOCKER_USERNAME/$DOCKER_IMAGE_ACT:latest"
+
+            echo "Stopping and removing existing container if it exists"
+            docker stop "$DOCKER_IMAGE_ACT" || true
+            docker rm "$DOCKER_IMAGE_ACT" || true
+
+            echo "Running new Docker container"
+            docker run --restart always \
+                      -e EMAIL_FROM="$EMAIL_FROM" \
+                      -e EMAIL_PASSWORD="$EMAIL_PASSWORD" \
+                      -e LOGO_URL="$LOGO_URL" \
+                      -e WEBSOCKET_URL="$WEBSOCKET_URL" \
+                      -d --name "$DOCKER_IMAGE_ACT" \
+                      -p 80:80 "$DOCKER_USERNAME/$DOCKER_IMAGE_ACT:latest"
