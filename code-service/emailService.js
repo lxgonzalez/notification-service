@@ -9,22 +9,21 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
 function generateEmailContent(code, date) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
-      <div style="background-color: #333; color: white; padding: 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px;">🚀 code Notification Alert!</h1>
+      <div style="background-color: #ec4899; color: white; padding: 20px; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px;">🚀 Code Notification Alert!</h1>
       </div>
-      <div style="padding: 20px; background-color: #f9f9f9;">
+      <div style="padding: 20px; background-color: #f3f4f6;">
         <p style="font-size: 18px; color: #333;">
-          The code <strong style="color: #555;">${code}</strong> was registered on <strong>${date}</strong>.
+          The code <strong style="color: #8b5cf6;">${code}</strong>
         </p>
         <div style="text-align: center; margin-top: 15px;">
           <img src="${LOGO_URL}" alt="Company Logo" style="width: 40%; border-radius: 8px;">
         </div>
       </div>
-      <div style="padding: 15px; background-color: #333; color: white; text-align: center;">
+      <div style="padding: 15px; background-color: #ec4899; color: white; text-align: center;">
         <p style="margin: 0;">Eternal Graphics © 2025. All rights reserved.</p>
       </div>
     </div>
